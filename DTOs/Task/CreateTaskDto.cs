@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using piton_taskmanagement_api.Models;
+using System.Text.Json.Serialization;
 
 namespace piton_taskmanagement_api.DTOs.Task
 {
@@ -11,5 +13,9 @@ namespace piton_taskmanagement_api.DTOs.Task
 
         [Required]
         public DateTime DueDate { get; set; }
+
+        [Required]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public TaskDuration Duration { get; set; }
     }
 }

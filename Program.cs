@@ -8,6 +8,7 @@ using piton_taskmanagement_api.Services.Implementations;
 using piton_taskmanagement_api.Services.Interfaces;
 using piton_taskmanagement_api.Settings;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,10 +65,19 @@ builder.Services.AddAuthentication(options =>
 });
 
 // ------------------------
-// CONTROLLERS
+// CONTROLLERS & JSON CONFIG
 // ------------------------
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Enum'ları string olarak serialize et
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        // Case insensitive enum parsing için
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        // Property naming policy
+        options.JsonSerializerOptions.PropertyNamingPolicy = null; // PascalCase korumak için
+    });
 
 // ------------------------
 // SWAGGER (JWT DESTEKLİ)
@@ -112,7 +122,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseAuthentication();  // JWT Middleware
+app.UseAuthentication(); // JWT Middleware
 app.UseAuthorization();
 
 app.MapControllers();

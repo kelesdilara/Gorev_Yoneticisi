@@ -20,34 +20,23 @@ namespace piton_taskmanagement_api.Services.Implementations
             return tasks.Select(ToDto).ToList();
         }
 
-        public async Task<List<TaskDto>> GetDailyAsync(string userId)
+        private async Task<List<TaskDto>> GetByDurationAsync(string userId, TaskDuration duration)
         {
-            var today = DateTime.UtcNow.Date;
-            return await GetByRange(userId, today, today.AddDays(1).AddTicks(-1));
+            var tasks = await _taskRepository.GetAllByUserIdAsync(userId);
+            return tasks
+                .Where(t => t.Duration == duration)
+                .Select(ToDto)
+                .ToList();
         }
 
-        public async Task<List<TaskDto>> GetWeeklyAsync(string userId)
-        {
-            var today = DateTime.UtcNow;
-            int diff = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
-            var start = today.Date.AddDays(-1 * diff);
-            var end = start.AddDays(7).AddTicks(-1);
-            return await GetByRange(userId, start, end);
-        }
+        public Task<List<TaskDto>> GetDailyAsync(string userId) =>
+            GetByDurationAsync(userId, TaskDuration.Daily);
 
-        public async Task<List<TaskDto>> GetMonthlyAsync(string userId)
-        {
-            var now = DateTime.UtcNow;
-            var start = new DateTime(now.Year, now.Month, 1);
-            var end = start.AddMonths(1).AddTicks(-1);
-            return await GetByRange(userId, start, end);
-        }
+        public Task<List<TaskDto>> GetWeeklyAsync(string userId) =>
+            GetByDurationAsync(userId, TaskDuration.Weekly);
 
-        private async Task<List<TaskDto>> GetByRange(string userId, DateTime start, DateTime end)
-        {
-            var tasks = await _taskRepository.GetByDateRangeAsync(userId, start, end);
-            return tasks.Select(ToDto).ToList();
-        }
+        public Task<List<TaskDto>> GetMonthlyAsync(string userId) =>
+            GetByDurationAsync(userId, TaskDuration.Monthly);
 
         public async Task<TaskDto?> GetByIdAsync(string id)
         {
@@ -63,7 +52,8 @@ namespace piton_taskmanagement_api.Services.Implementations
                 Description = dto.Description,
                 DueDate = dto.DueDate,
                 OwnerId = userId,
-                Status = "pending"
+                Status = "pending",
+                Duration = dto.Duration
             };
 
             await _taskRepository.CreateAsync(task);
@@ -78,6 +68,7 @@ namespace piton_taskmanagement_api.Services.Implementations
             task.Title = dto.Title;
             task.Description = dto.Description;
             task.DueDate = dto.DueDate;
+            task.Duration = dto.Duration;
 
             await _taskRepository.UpdateAsync(task);
         }
@@ -93,7 +84,8 @@ namespace piton_taskmanagement_api.Services.Implementations
             Title = task.Title,
             Description = task.Description,
             DueDate = task.DueDate,
-            Status = task.Status
+            Status = task.Status,
+            Duration = task.Duration
         };
     }
 }
